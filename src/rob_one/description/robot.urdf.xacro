@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="rob_one">
+
+    <!-- ======================================================================= -->
+    <!-- MASTER URDF DOSYASI                                                     -->
+    <!-- Bu dosya tüm AMR bileşenlerini (şasi, sensörler, simülasyon eklentileri)-->
+    <!-- tek bir çatı altında birleştiren ana kök (root) dosyasıdır.             -->
+    <!-- ======================================================================= -->
+
+    <!-- 1. TEMEL MEKANİK BİLEŞENLER -->
+    <!-- Şasi, tekerlekler, malzemeler ve boyut değişkenlerini içerir -->
+    <xacro:include filename="robot_core.xacro" />
+
+    
+    
+    <!-- 2. SENSÖRLER  -->
+    <xacro:include filename="lidar.xacro" />
+    <xacro:include filename="camera_depth.xacro" />
+
+    <!-- 3. SİMÜLASYON KONTROL EKLENTİLERİ (GAZEBO) -->
+    <xacro:include filename="gazebo_control.xacro" />
+
+</robot> 

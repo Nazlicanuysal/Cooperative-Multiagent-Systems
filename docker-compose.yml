@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  amr_project:
+    build: .
+    container_name: kou_rover_amr
+    # Windows/WSL2 üzerinde görsel arayüz (GUI) açabilmek için gerekli ayarlar
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    network_mode: host
+    stdin_open: true
+    tty: true
