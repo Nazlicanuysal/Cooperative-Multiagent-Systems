@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.7">
+  <world name="default">
+    <!-- Işık ve Zemin (Değişmedi) -->
+    <light name="sun" type="directional">
+      <cast_shadows>1</cast_shadows>
+      <pose>0 0 10 0 -0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name="ground_plane">
+      <static>1</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <surface><friction><ode><mu>100</mu><mu2>50</mu2></ode></friction></surface>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    
+    <gravity>0 0 -9.8</gravity>
+    <physics type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+
+    <!-- YENİ ARENA VE İÇ DUVARLAR -->
+    <model name="custom_arena">
+      <static>1</static>
+      <link name="walls_link">
+        
+        <!-- 1. DIŞ ÇEVRE DUVARLARI (Kare Sınır) -->
+        <collision name="c_north"><pose>0 10 0.6 0 0 0</pose><geometry><box><size>20.4 0.4 1.2</size></box></geometry></collision>
+        <visual name="v_north"><pose>0 10 0.6 0 0 0</pose><geometry><box><size>20.4 0.4 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material></visual>
+        
+        <collision name="c_south"><pose>0 -10 0.6 0 0 0</pose><geometry><box><size>20.4 0.4 1.2</size></box></geometry></collision>
+        <visual name="v_south"><pose>0 -10 0.6 0 0 0</pose><geometry><box><size>20.4 0.4 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material></visual>
+        
+        <collision name="c_east"><pose>10 0 0.6 0 0 0</pose><geometry><box><size>0.4 20 1.2</size></box></geometry></collision>
+        <visual name="v_east"><pose>10 0 0.6 0 0 0</pose><geometry><box><size>0.4 20 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material></visual>
+        
+        <collision name="c_west"><pose>-10 0 0.6 0 0 0</pose><geometry><box><size>0.4 20 1.2</size></box></geometry></collision>
+        <visual name="v_west"><pose>-10 0 0.6 0 0 0</pose><geometry><box><size>0.4 20 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material></visual>
+
+        <!-- 2. SOL TARAFTAKİ YATAY RAFLAR / DUVARLAR -->
+        <collision name="c_shelf_l1"><pose>-5 6 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry></collision>
+        <visual name="v_shelf_l1"><pose>-5 6 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Red</name></script></material></visual>
+        
+        <collision name="c_shelf_l2"><pose>-5 3 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry></collision>
+        <visual name="v_shelf_l2"><pose>-5 3 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Red</name></script></material></visual>
+        
+        <collision name="c_shelf_l3"><pose>-5 0 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry></collision>
+        <visual name="v_shelf_l3"><pose>-5 0 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Red</name></script></material></visual>
+
+        <!-- 3. SAĞ TARAFTAKİ YATAY RAFLAR / DUVARLAR -->
+        <collision name="c_shelf_r1"><pose>5 6 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry></collision>
+        <visual name="v_shelf_r1"><pose>5 6 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Red</name></script></material></visual>
+        
+        <collision name="c_shelf_r2"><pose>5 3 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry></collision>
+        <visual name="v_shelf_r2"><pose>5 3 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Red</name></script></material></visual>
+        
+        <collision name="c_shelf_r3"><pose>5 0 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry></collision>
+        <visual name="v_shelf_r3"><pose>5 0 0.6 0 0 0</pose><geometry><box><size>4 0.2 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Red</name></script></material></visual>
+
+        <!-- 4. ORTADAKİ MAVİ SÜTUN (Silindir) -->
+        <collision name="c_center_pillar"><pose>0 -3.5 0.6 0 0 0</pose><geometry><cylinder><radius>0.4</radius><length>1.2</length></cylinder></geometry></collision>
+        <visual name="v_center_pillar"><pose>0 -3.5 0.6 0 0 0</pose><geometry><cylinder><radius>0.4</radius><length>1.2</length></cylinder></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Blue</name></script></material></visual>
+
+        <!-- 5. ALT KISIMDAKİ "L" ŞEKLİNDEKİ ENGEL -->
+        <!-- L'nin Yatay Uzun Kısmı -->
+        <collision name="c_L_horiz"><pose>1.5 -6.5 0.6 0 0 0</pose><geometry><box><size>13 0.2 1.2</size></box></geometry></collision>
+        <visual name="v_L_horiz"><pose>1.5 -6.5 0.6 0 0 0</pose><geometry><box><size>13 0.2 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Red</name></script></material></visual>
+        
+        <!-- L'nin Dikey Kısa Kısmı -->
+        <collision name="c_L_vert"><pose>-5 -8.2 0.6 0 0 0</pose><geometry><box><size>0.2 3.6 1.2</size></box></geometry></collision>
+        <visual name="v_L_vert"><pose>-5 -8.2 0.6 0 0 0</pose><geometry><box><size>0.2 3.6 1.2</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Red</name></script></material></visual>
+
+      </link>
+    </model>
+  </world>
+</sdf>

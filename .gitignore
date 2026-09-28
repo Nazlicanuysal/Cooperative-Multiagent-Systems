@@ -1,0 +1,6 @@
+build/
+install/
+log/
+*.zip
+*.tar.gz
+.vscode/
