@@ -1,10 +1,10 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, GroupAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetRemap
 
 
 def generate_launch_description():
@@ -25,12 +25,19 @@ def generate_launch_description():
                           'autostart': 'true',
                           'params_file': params_file}.items())
 
-    navigation = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(nav2_share, 'launch', 'navigation_launch.py')),
-        launch_arguments={'use_sim_time': use_sim_time,
-                          'autostart': 'true',
-                          'params_file': params_file}.items())
+    # YENİ EKLENEN KISIM: Navigasyon bloğunu GroupAction içine alıp yeniden haritalıyoruz
+    navigation = GroupAction(
+        actions=[
+            SetRemap(src='/cmd_vel', dst='/cmd_vel_nav'),
+            SetRemap(src='cmd_vel', dst='cmd_vel_nav'),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(pkg_share, 'launch', 'navigation_custom.launch.py')),
+                launch_arguments={'use_sim_time': use_sim_time,
+                                  'autostart': 'true',
+                                  'params_file': params_file}.items())
+        ]
+    )
 
     rviz = Node(
         package='rviz2', executable='rviz2', name='rviz2',
@@ -41,6 +48,6 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='true'),
         localization,
-        navigation,
+        navigation,  # Remap edilmiş yeni navigasyon bloğunu çağırıyoruz
         rviz
     ])

@@ -16,8 +16,12 @@
             <max_wheel_acceleration>10.0</max_wheel_acceleration>
             
             <!-- Odometri ve TF Yayın Ayarları -->
+
             <odometry_frame>odom</odometry_frame>
             <robot_base_frame>base_link</robot_base_frame>
+            
+            <!-- Gazebo'nun hız komutlarını alacağı kanal  -->
+            <command_topic>cmd_vel</command_topic>
 
             <publish_odom>true</publish_odom>
             <publish_odom_tf>true</publish_odom_tf>

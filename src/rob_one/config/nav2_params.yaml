@@ -1,23 +1,32 @@
 amcl:
   ros__parameters:
     use_sim_time: True
-    base_frame_id: "base_footprint"
+    base_frame_id: "base_link"
     odom_frame_id: "odom"
     global_frame_id: "map"
     scan_topic: scan
+    transform_tolerance: 1.0
     laser_min_range: 0.3
     laser_max_range: 12.0
     max_particles: 3000
     min_particles: 800
-    update_min_d: 0.1      # YENİ: Robot her 10 cm ilerlediğinde haritadaki konumunu doğrula
-    update_min_a: 0.1      # YENİ: Robot her 5.7 derece (0.1 radyan) döndüğünde konumunu doğrula
+    update_min_d: 0.1
+    update_min_a: 0.1
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
+    
+    # YENİ: Başlangıç konumu otomatik atanıyor (0, 0)
+    set_initial_pose: True
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
 
 bt_navigator:
   ros__parameters:
     use_sim_time: True
     global_frame: map
-    robot_base_frame: base_footprint
+    robot_base_frame: base_link
     odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
@@ -66,33 +75,87 @@ controller_server:
       required_movement_radius: 0.5
       movement_time_allowance: 10.0
     general_goal_checker:
-      stateful: True
+      stateful: False
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.35
+      yaw_goal_tolerance: 0.40
 
-    # MPPI Kontrolcüsü Ayarları
+    # MPPI Kontrolcüsü Ayarları (Optimize edildi ve Critics eklendi)
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
-      time_steps: 56
+      time_steps: 40         # YENİ: Optimize edildi
       model_dt: 0.05
-      batch_size: 2000
+      batch_size: 1000       # YENİ: Optimize edildi
       vx_std: 0.2
-      vy_std: 0.0  # Diferansiyel sürüş için 0.0 (omni ise artır)
+      vy_std: 0.0  
       wz_std: 0.4
       vx_max: 0.5
       vx_min: -0.35
       wz_max: 1.9
       iteration_count: 1
       prune_distance: 1.7
-      transform_tolerance: 0.1
+      transform_tolerance: 0.5
       temperature: 0.3
       gamma: 0.015
-      motion_model: "DiffDrive" # Robot tipine göre (Omni, DiffDrive, Ackermann)
+      motion_model: "DiffDrive" 
       visualize: False
       TrajectoryVisualizer:
         trajectory_step: 5
         time_step: 3
+
+      # YENİ: MPPI Critics Listesi (Yörünge Değerlendirme Algoritmaları)
+      critics: ["ConstraintCritic", "ObstaclesCritic", "GoalCritic", "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic", "PathAngleCritic", "PreferForwardCritic"]
+      ConstraintCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 4.0
+      GoalCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 1.4
+      GoalAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.0
+        threshold_to_consider: 0.5
+      PreferForwardCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 0.5
+      ObstaclesCritic:
+        enabled: true
+        cost_power: 1
+        repulsion_weight: 1.5
+        critical_weight: 20.0
+        consider_footprint: true
+        collision_cost: 10000.0
+        collision_margin_distance: 0.1
+        near_goal_distance: 0.5
+      PathAlignCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 14.0
+        max_path_occupancy_ratio: 0.05
+        trajectory_point_step: 4
+        threshold_to_consider: 0.5
+        offset_from_furthest: 20
+        use_path_orientations: false
+      PathFollowCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        offset_from_furthest: 5
+        threshold_to_consider: 1.4
+      PathAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 2.0
+        offset_from_furthest: 4
+        threshold_to_consider: 0.5
+        max_angle_to_furthest: 1.0
+        mode: 0
 
 local_costmap:
   local_costmap:
@@ -100,18 +163,18 @@ local_costmap:
       update_frequency: 5.0
       publish_frequency: 2.0
       global_frame: odom
-      robot_base_frame: base_footprint
+      robot_base_frame: base_link
       use_sim_time: True
       rolling_window: true
-      width: 6
-      height: 6
+      width: 3         # ÖNEMLİ: Dar alanlar için 6 yerine 3 metreye düşürdük
+      height: 3        # ÖNEMLİ: Daha hızlı tepki için 3 metre
       resolution: 0.05
       footprint: "[[0.70, 0.33], [0.70, -0.33], [-0.15, -0.33], [-0.15, 0.33]]"
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.75
+        inflation_radius: 0.55  # Local costmap'te robotun etrafındaki şişirmeyi biraz azalttık
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -139,7 +202,7 @@ global_costmap:
       update_frequency: 1.0
       publish_frequency: 1.0
       global_frame: map
-      robot_base_frame: base_footprint
+      robot_base_frame: base_link
       use_sim_time: True
       resolution: 0.05
       footprint: "[[0.70, 0.33], [0.70, -0.33], [-0.15, -0.33], [-0.15, 0.33]]"
@@ -170,7 +233,7 @@ global_costmap:
 map_server:
   ros__parameters:
     use_sim_time: True
-    yaml_filename: ""
+    yaml_filename: "/home/nazlican/dev_ws/src/rob_one/maps/map_saved.yaml"
 
 planner_server:
   ros__parameters:
@@ -200,8 +263,8 @@ behavior_server:
     wait:
       plugin: "nav2_behaviors/Wait"            
     global_frame: odom
-    robot_base_frame: base_footprint
-    transform_tolerance: 0.1
+    robot_base_frame: base_link
+    transform_tolerance: 0.5
 
 waypoint_follower:
   ros__parameters:
@@ -219,7 +282,7 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.45, 0.0, 0.8]
+    max_velocity: [0.5, 0.0, 0.8]
     min_velocity: [-0.45, 0.0, -0.8]
     max_accel: [1.0, 0.0, 1.5]
     max_decel: [-1.5, 0.0, -2.0]
