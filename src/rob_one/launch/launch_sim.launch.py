@@ -41,6 +41,6 @@ def generate_launch_description():
         executable='twist_mux',
         output='screen',
         remappings=[('/cmd_vel_out', '/cmd_vel')],
-        parameters=[twist_mux_params])
+        parameters=[twist_mux_params, {'use_sim_time': True}])
 
     return LaunchDescription([declare_world, rsp, gazebo, spawn_entity, twist_mux_node])

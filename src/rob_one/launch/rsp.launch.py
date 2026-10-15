@@ -24,8 +24,8 @@ def generate_launch_description():
         executable='robot_state_publisher',
         output='screen',
         parameters=[{
-            'robot_description': robot_description, 
-            'use_sim_time': use_sim_time
+            'robot_description': robot_description,
+            'use_sim_time': LaunchConfiguration('use_sim_time')
         }]
     )
 

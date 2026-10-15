@@ -1,8 +1,9 @@
 twist_mux:
   ros__parameters:
+    use_sim_time: True   
     topics:
       navigation:
-         topic: cmd_vel_nav_smoothed   # GÜNCELLENDİ: Artık yumuşatılmış kanalı dinliyor
+         topic: cmd_vel_nav_smoothed   #yumuşatılmış kanalı dinliyor
          timeout: 0.5
          priority: 10
       joystick:
