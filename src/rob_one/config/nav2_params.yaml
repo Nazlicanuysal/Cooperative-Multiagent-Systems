@@ -4,14 +4,21 @@ amcl:
     base_frame_id: "base_link"
     odom_frame_id: "odom"
     global_frame_id: "map"
-    scan_topic: scan
+    scan_topic: /scan                     # '/' geri eklendi
     transform_tolerance: 0.5
     laser_min_range: 0.3
     laser_max_range: 12.0
+    max_beams: 60
     max_particles: 3000
     min_particles: 800
     update_min_d: 0.10
     update_min_a: 0.15
+    laser_model_type: "likelihood_field"
+    # Keskin dönüşlerde yeşil AMCL parçacıklarının dağılmasını önleyen gürültü katsayıları
+    alpha1: 0.05
+    alpha2: 0.05
+    alpha3: 0.05
+    alpha4: 0.05
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
     set_initial_pose: True
     initial_pose:
@@ -25,7 +32,7 @@ bt_navigator:
     use_sim_time: True
     global_frame: map
     robot_base_frame: base_link
-    odom_topic: /odom
+    odom_topic: odom                      # Multi-agent namespace uyumu için '/' kaldırıldı
     bt_loop_duration: 20
     default_server_timeout: 50
     plugin_lib_names:
@@ -81,28 +88,30 @@ controller_server:
       
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
-      time_steps: 35                        # 35 * 0.05 = 1.75s öngörü ufku (T)
-      model_dt: 0.05                        # 20 Hz controller_frequency ile tam senkronize (dt)
-      batch_size: 1000                      # Sıfır ortalamalı Gauss gürültüsünde seyrekliği önler (K)
-      vx_std: 0.30                          # Doğrusal hız örnekleme standart sapması
-      vy_std: 0.0                           # Diferansiyel sürüş kısıtı (yanal hız = 0)
-      wz_std: 0.35                          # Açısal hız örnekleme standart sapması
-      vx_max: 0.65                          # Maksimum ileri hız (m/s)
-      vx_min: -0.15                         # Olduğu yerde geri dönerek savrulmayı engeller
-      wz_max: 1.2                           # Maksimum açısal hız (rad/s)
+      # 1. ÖNGÖRÜ UFKU (Miyopik yerel minimumu önlemek için T = 2.0s ufuk)
+      time_steps: 40                        # 40 * 0.05 = 2.0 saniyelik öngörü ufku
+      model_dt: 0.05                        # 20 Hz kontrol döngüsüyle tam senkronize
+      batch_size: 1000                      # Monte Carlo örneklem sayısı (K = 1000)
       
-      # GERÇEK MPPI KİNODİNAMİK İVME PARAMETRELERİ (Velocity Smoother ile birebir aynı!)
-      ax_max: 0.8                           # Maksimum ileri ivme (m/s^2)
-      ax_min: -1.0                          # Maksimum frenleme ivmesi (m/s^2)
+      # 2. KİNEMATİK VE KİNODİNAMİK KISITLAR
+      vx_std: 0.30
+      vy_std: 0.0
+      wz_std: 0.35
+      vx_max: 0.65
+      vx_min: -0.10                         # Geri kaçışla oluşan spin salınımını sönümler
+      wz_max: 1.2
+      ax_max: 0.8
+      ax_min: -1.0
       ay_max: 0.0
-      az_max: 1.2                           # Maksimum açısal ivme (rad/s^2) - Faz gecikmesini önler
+      az_max: 1.2
       
+      # 3. A* KÜRESEL ROTA PENCERESİ VE BİLGİ KURAMSAL AĞIRLIKLANDIRMA
       iteration_count: 1
-      prune_distance: 2.0                   # 6x6 local_costmap yarıçapı (3.0m) içinde güvenli budama
-      max_robot_pose_search_dist: 3.0       # 0 poses hatasını engelleyen arama yarıçapı
+      prune_distance: 2.2                   # 2.0s ufuk için A* rotasından 2.2m kesit alır
+      max_robot_pose_search_dist: 3.0       # 6x6 local_costmap yarıçapı ile tam uyumlu
       transform_tolerance: 0.5
-      temperature: 0.5                      # Tekil yörüngeye çöküp fırıldak gibi dönmeyi önler (lambda)
-      gamma: 0.015                          # Kontrol eforu ağırlığı (R matrisi karşılığı)
+      temperature: 0.35                     # Üstel ağırlıklandırma seçicilik sıcaklığı (lambda)
+      gamma: 0.015                          # Kontrol eforu cezası
       motion_model: "DiffDrive"
       visualize: False
       TrajectoryVisualizer:
@@ -118,7 +127,7 @@ controller_server:
         
       GoalCritic:
         enabled: true
-        cost_power: 1
+        cost_power: 1                       # DRPA-MPPI doğrusal Öklid normu (1. derece)
         cost_weight: 8.0
         threshold_to_consider: 1.4
         
@@ -128,22 +137,24 @@ controller_server:
         cost_weight: 8.0
         threshold_to_consider: 0.5
         
+      # DRPA-MPPI YEREL MİNİMUM (IN-PLACE ROTATION) KIRICI TERİMLER
       PreferForwardCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 10.0                   # Kalkışta olduğu yerde dönmek yerine ileri kavis almayı zorlar
+        cost_weight: 14.0                   # Olduğu yerde dönme/geri gitme tuzağını cezalandırır
         threshold_to_consider: 0.5
         
       ObstaclesCritic:
         enabled: true
         cost_power: 1
-        repulsion_weight: 3.0               # Aşırı itme nedeniyle olduğu yerde spin atmayı önler
+        repulsion_weight: 4.5               # İtici potansiyel alan (U_rep) ağırlığı artırıldı
         critical_weight: 20.0
         consider_footprint: true
         collision_cost: 10000.0
-        collision_margin_distance: 0.12     # Dar koridor ve başlangıç engeli için optimize edildi
+        collision_margin_distance: 0.15     # Duvara 15 cm kala güçlü itici gradyan devreye girer
         near_goal_distance: 0.5
         
+      # A*-REHBERLİ (HYBRID A*-GUIDED) YÖRÜNGE TAKİP TERİMLERİ
       PathAlignCritic:
         enabled: true
         cost_power: 1
@@ -151,24 +162,24 @@ controller_server:
         max_path_occupancy_ratio: 0.07
         trajectory_point_step: 3
         threshold_to_consider: 0.5
-        offset_from_furthest: 10            # 20'den 10'a çekildi: Kalkışta çok daha erken devreye girer
+        offset_from_furthest: 8             # 8 * 0.05 = 0.40m ileriden hizalama başlatır
         use_path_orientations: false
         
       PathFollowCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 12.0                   # Robotu ileri doğru rota boyunca çeker
-        offset_from_furthest: 6
+        cost_weight: 16.0                   # Ufuk sonunu (p_T) A* rotası boyunca ileri çeker (Tuzak kırıcı)
+        offset_from_furthest: 8             # Hedef teğetini 0.40m ileride tutarak spin atmayı önler
         threshold_to_consider: 1.4
         
       PathAngleCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 6.0                    # 2.0'dan 6.0'a çıkarıldı: Kalkışta burnunu rotaya çevirir
-        offset_from_furthest: 4
+        cost_weight: 8.0                    # Rotaya kavis alarak yönelmeyi hızlandırır
+        offset_from_furthest: 8             # Yakın nokta kararsızlığını önlemek için 8 adıma çıkarıldı
         threshold_to_consider: 0.5
-        max_angle_to_furthest: 0.6          # ~34 dereceye kadar aktif yönelim düzeltmesi yapar
-        mode: 0
+        max_angle_to_furthest: 0.65
+        mode: 0                             # 0: İleri yönelim tercihi (Forward Preference)
 
 local_costmap:
   local_costmap:
@@ -182,13 +193,12 @@ local_costmap:
       width: 6
       height: 6
       resolution: 0.05
-      # SİMETRİK FOOTPRINT: Sarı robot gövdesine tam ortalandı (0.70m taşma kaldırıldı)
       footprint: "[[0.38, 0.32], [0.38, -0.32], [-0.38, -0.32], [-0.38, 0.32]]"
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.40
+        cost_scaling_factor: 2.0
+        inflation_radius: 0.45
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -200,7 +210,7 @@ local_costmap:
         mark_threshold: 0
         observation_sources: scan
         scan:
-          topic: /scan
+          topic: /scan                    # KRİTİK: Alt düğümün kök '/scan' kanalını görmesi için '/' şart!
           max_obstacle_height: 2.0
           clearing: True
           marking: True
@@ -219,7 +229,6 @@ global_costmap:
       robot_base_frame: base_link
       use_sim_time: True
       resolution: 0.05
-      # SİMETRİK FOOTPRINT: Global ve Local Costmap birebir aynı taban izini kullanır
       footprint: "[[0.38, 0.32], [0.38, -0.32], [-0.38, -0.32], [-0.38, 0.32]]"
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
@@ -228,7 +237,7 @@ global_costmap:
         enabled: True
         observation_sources: scan
         scan:
-          topic: /scan
+          topic: /scan                    # KRİTİK: Alt düğümün kök '/scan' kanalını görmesi için '/' şart!
           max_obstacle_height: 1.5
           clearing: True
           marking: True
@@ -240,9 +249,10 @@ global_costmap:
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
+        map_topic: /map                   # Statik haritanın her zaman yüklenmesini garanti eder
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 2.5
+        cost_scaling_factor: 2.0
         inflation_radius: 0.55
 
 map_server:
@@ -295,17 +305,16 @@ waypoint_follower:
       plugin: "nav2_waypoint_follower::WaitAtWaypoint"
       waypoint_pause_duration: 200
 
-# MPPI Kinodinamik Sınırları İle Faz Gecikmesiz (Senkronize) Hız Yumuşatıcı
 velocity_smoother:
   ros__parameters:
     use_sim_time: True
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.65, 0.0, 1.2]    # MPPI vx_max (0.65) ve wz_max (1.2) ile birebir eşit
-    min_velocity: [-0.15, 0.0, -1.2]  # MPPI vx_min (-0.15) ile birebir eşit
-    max_accel: [0.8, 0.0, 1.2]        # MPPI ax_max (0.8) ve az_max (1.2) ile birebir eşit
-    max_decel: [-1.0, 0.0, -1.5]      # MPPI ax_min (-1.0) ile uyumlu
+    max_velocity: [0.65, 0.0, 1.2]
+    min_velocity: [-0.10, 0.0, -1.2]        # MPPI vx_min (-0.10) ile birebir eşitlendi
+    max_accel: [0.8, 0.0, 1.2]
+    max_decel: [-1.0, 0.0, -1.5]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
