@@ -21,7 +21,7 @@
             <robot_base_frame>base_link</robot_base_frame>
             
             <!-- Gazebo'nun hız komutlarını alacağı kanal  -->
-            <command_topic>cmd_vel</command_topic>
+            <!-- <command_topic>cmd_vel</command_topic>  //ros1  --> ros1 
 
             <publish_odom>true</publish_odom>
             <publish_odom_tf>true</publish_odom_tf>

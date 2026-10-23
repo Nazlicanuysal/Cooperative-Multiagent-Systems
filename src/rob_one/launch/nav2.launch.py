@@ -25,7 +25,7 @@ def generate_launch_description():
                           'autostart': 'true',
                           'params_file': params_file}.items())
 
-    # YENİ EKLENEN KISIM: Navigasyon bloğunu GroupAction içine alıp yeniden haritalıyoruz
+    #Navigasyon bloğunu GroupAction içine alınıp yeniden haritalanıyor
     navigation = GroupAction(
         actions=[
             SetRemap(src='/cmd_vel', dst='/cmd_vel_nav'),
@@ -42,7 +42,7 @@ def generate_launch_description():
     rviz = Node(
         package='rviz2', executable='rviz2', name='rviz2',
         arguments=['-d', rviz_cfg] if os.path.exists(rviz_cfg) else [],
-        parameters=[{'use_sim_time': use_sim_time}],
+        parameters=[{'use_sim_time': True}],
         output='screen')
 
     return LaunchDescription([

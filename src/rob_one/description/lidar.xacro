@@ -5,7 +5,7 @@
         <parent link="base_link"/>
         <child link="laser_frame"/>
         <!-- Bizim AMR'nin şasi yüksekliğine göre tam üst merkeze konumlandırıldı -->
-        <origin xyz="0 0 0.34" rpy="0 0 0"/>
+        <origin xyz="0 0 0.40" rpy="0 0 0"/>
     </joint>
 
     <link name="laser_frame">
@@ -39,7 +39,7 @@
         <sensor name="laser" type="ray">
             <pose> 0 0 0 0 0 0 </pose>
             <!-- Lazer ışınlarını Gazebo'da görmek için true yapıldı -->
-            <visualize>true</visualize>
+            <visualize>false</visualize>
             <update_rate>10</update_rate>
             <ray>
                 <scan>
