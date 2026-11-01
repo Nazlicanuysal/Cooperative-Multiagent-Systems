@@ -1,0 +1,20 @@
+digraph G {
+"amr_1/base_link" -> "amr_1/right_wheel"[label=" Broadcaster: default_authority\nAverage rate: 100.199\nBuffer length: 5.02\nMost recent transform: 278.513\nOldest transform: 273.493\n"];
+"amr_1/odom" -> "amr_1/base_link"[label=" Broadcaster: default_authority\nAverage rate: 100.2\nBuffer length: 5.01\nMost recent transform: 278.503\nOldest transform: 273.493\n"];
+"amr_1/base_link" -> "amr_1/base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"amr_1/chassis" -> "amr_1/caster_wheel"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"amr_1/base_link" -> "amr_1/chassis"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"amr_1/base_link" -> "amr_1/laser_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"amr_1/base_link" -> "amr_1/left_wheel"[label=" Broadcaster: default_authority\nAverage rate: 100.199\nBuffer length: 5.02\nMost recent transform: 278.513\nOldest transform: 273.493\n"];
+"amr_2/base_link" -> "amr_2/base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"amr_2/odom" -> "amr_2/base_link"[label=" Broadcaster: default_authority\nAverage rate: 100.2\nBuffer length: 5.01\nMost recent transform: 278.503\nOldest transform: 273.493\n"];
+"amr_2/chassis" -> "amr_2/caster_wheel"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"amr_2/base_link" -> "amr_2/chassis"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"amr_2/base_link" -> "amr_2/laser_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"amr_2/base_link" -> "amr_2/right_wheel"[label=" Broadcaster: default_authority\nAverage rate: 100.2\nBuffer length: 5.01\nMost recent transform: 278.503\nOldest transform: 273.493\n"];
+"amr_2/base_link" -> "amr_2/left_wheel"[label=" Broadcaster: default_authority\nAverage rate: 100.2\nBuffer length: 5.01\nMost recent transform: 278.503\nOldest transform: 273.493\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1793375469.0011697"[ shape=plaintext ] ;
+}->"amr_2/odom";
+}

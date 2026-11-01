@@ -1,21 +1,19 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
-    <joint name="laser_joint" type="fixed">
-        <parent link="base_link"/>
-        <child link="laser_frame"/>
-        <!-- Bizim AMR'nin şasi yüksekliğine göre tam üst merkeze konumlandırıldı -->
+    <joint name="$(arg prefix)laser_joint" type="fixed">
+        <parent link="$(arg prefix)base_link"/>
+        <child link="$(arg prefix)laser_frame"/>
         <origin xyz="0 0 0.40" rpy="0 0 0"/>
     </joint>
 
-    <link name="laser_frame">
+    <link name="$(arg prefix)laser_frame">
         <visual>
             <geometry>
                 <cylinder radius="0.05" length="0.04"/>
             </geometry>
             <material name="black"/>
         </visual>
-        <!-- Lidar'ı havada tutan küçük destek çubuğu -->
         <visual>
             <origin xyz="0 0 -0.05"/>
             <geometry>
@@ -33,12 +31,10 @@
         </xacro:inertial_cylinder>
     </link>
 
-    <gazebo reference="laser_frame">
+    <gazebo reference="$(arg prefix)laser_frame">
         <material>Gazebo/Black</material>
-
         <sensor name="laser" type="ray">
             <pose> 0 0 0 0 0 0 </pose>
-            <!-- Lazer ışınlarını Gazebo'da görmek için true yapıldı -->
             <visualize>false</visualize>
             <update_rate>10</update_rate>
             <ray>
@@ -51,7 +47,7 @@
                 </scan>
                 <range>
                     <min>0.3</min>
-                    <max>12.0</max> <!-- Menzil artırıldı -->
+                    <max>12.0</max>
                 </range>
             </ray>
             <plugin name="laser_controller" filename="libgazebo_ros_ray_sensor.so">
@@ -59,7 +55,7 @@
                     <remapping>~/out:=scan</remapping>
                 </ros>
                 <output_type>sensor_msgs/LaserScan</output_type>
-                <frame_name>laser_frame</frame_name>
+                <frame_name>$(arg prefix)laser_frame</frame_name>
             </plugin>
         </sensor>
     </gazebo>

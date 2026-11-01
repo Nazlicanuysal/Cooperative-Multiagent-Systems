@@ -7,31 +7,37 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
-    # Simülasyon zamanı ayarı (Değişken tanımı)
+    # Değişken tanımları
     use_sim_time = LaunchConfiguration('use_sim_time')
+    prefix = LaunchConfiguration('prefix')
 
-   
     pkg_path = os.path.join(get_package_share_directory('rob_one'))
     xacro_file = os.path.join(pkg_path, 'description', 'robot.urdf.xacro')
 
-    # Xacro dosyasını çalışma zamanında (runtime) işle
-    robot_description = ParameterValue(Command(['xacro ', xacro_file]), value_type=str)
+    # Xacro komutuna 'prefix' argümanını ekliyoruz
+    robot_description = ParameterValue(
+        Command(['xacro ', xacro_file, ' prefix:=', prefix]), 
+        value_type=str
+    )
     
-   
     node_robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
         parameters=[{
             'robot_description': robot_description,
-            'use_sim_time': True
+            'use_sim_time': use_sim_time
         }]
     )
 
     return LaunchDescription([
         DeclareLaunchArgument(
             'use_sim_time',
-            default_value='true',  # SİMÜLASYON İÇİN TAVSİYE EDİLEN VARSAYILAN DEĞER
+            default_value='true',
             description='Use sim time if true'),
+        DeclareLaunchArgument(
+            'prefix',
+            default_value='',
+            description='TF prefix for multi-agent (e.g. amr_1/)'),
         node_robot_state_publisher
     ])

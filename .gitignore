@@ -4,3 +4,6 @@ log/
 *.zip
 *.tar.gz
 .vscode/
+build/
+install/
+log/
