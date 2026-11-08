@@ -1,19 +1,26 @@
+# Bu dosya robot-bağımsızdır. nav2_bringup_launch.py, RewrittenYaml(root_key=namespace)
+# ile tüm içeriği '<amr_X>:' altına taşır ve costmap 'topic' anahtarlarını
+# '/<amr_X>/scan' olarak yeniden yazar.
+# NOT: Çerçeve adları launch_sim.launch.py tarafından amr_X/... olarak YENİDEN YAZILIR.
+#      'global_frame' anahtarı hem "map" hem "odom" değeri taşır -> körlemesine yeniden
+#      yazılmamalı (bkz. local_costmap ve behavior_server).
+
 amcl:
   ros__parameters:
     use_sim_time: True
-    base_frame_id: "base_link"
+    base_frame_id: "base_footprint"
     odom_frame_id: "odom"
     global_frame_id: "map"
     map_topic: "/map"
-    scan_topic: scan                    # DÜZELTİLDİ: "/" işareti kaldırıldı, her robot kendi lidarını okuyacak
-    transform_tolerance: 2.0
+    scan_topic: scan                    # göreli -> /amr_X/scan
+    transform_tolerance: 0.5
     laser_min_range: 0.3
     laser_max_range: 12.0
     max_beams: 60
     max_particles: 2000
     min_particles: 500
-    update_min_d: -1.0                    
-    update_min_a: -1.0                   
+    update_min_d: 0.20
+    update_min_a: 0.20
     tf_broadcast: true
     resample_interval: 1
     laser_model_type: "likelihood_field"
@@ -23,7 +30,7 @@ amcl:
     alpha4: 0.10
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
     set_initial_pose: True
-    initial_pose:
+    initial_pose:                       # x/y/yaw launch dosyasındaki ROBOTS listesinden yazılır
       x: 0.0
       y: 1.0
       z: 0.0
@@ -33,11 +40,14 @@ bt_navigator:
   ros__parameters:
     use_sim_time: True
     global_frame: "map"
-    robot_base_frame: "base_link"
-    odom_topic: odom                     
+    robot_base_frame: "base_footprint"
+    odom_topic: odom                    # göreli -> /amr_X/odom
     bt_loop_duration: 20
     default_server_timeout: 50
-    plugin_lib_names:                   # DÜZELTİLDİ: Satır kaymaları ve formatlama hataları giderildi
+    # Humble için gerekli. Iron/Jazzy kullanıyorsan BU LİSTEYİ SİL: varsayılan
+    # eklentiler otomatik yüklenir, tekrar listelemek "already registered" hatasıyla
+    # bt_navigator'ı çökertir.
+    plugin_lib_names:
       - nav2_compute_path_to_pose_action_bt_node
       - nav2_compute_path_through_poses_action_bt_node
       - nav2_follow_path_action_bt_node
@@ -73,26 +83,24 @@ controller_server:
   ros__parameters:
     use_sim_time: True
     controller_frequency: 20.0
+    odom_topic: odom
     progress_checker_plugin: "progress_checker"
     goal_checker_plugins: ["general_goal_checker"]
     controller_plugins: ["FollowPath"]
-    
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
       required_movement_radius: 0.25
       movement_time_allowance: 8.0
-      
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.15
       yaw_goal_tolerance: 0.20
-      
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
       time_steps: 56
       model_dt: 0.05
-      batch_size: 2000
+      batch_size: 1000
       vx_std: 0.2
       vy_std: 0.0
       wz_std: 0.4
@@ -106,7 +114,7 @@ controller_server:
       iteration_count: 1
       prune_distance: 1.7
       max_robot_pose_search_dist: 10.0
-      transform_tolerance: 0.1
+      transform_tolerance: 0.3
       temperature: 0.3
       gamma: 0.015
       motion_model: "DiffDrive"
@@ -115,7 +123,8 @@ controller_server:
       TrajectoryVisualizer:
         trajectory_step: 5
         time_step: 3
-      critics: ["ConstraintCritic", "CostCritic", "GoalCritic", "PathAlignCritic", "PathFollowCritic", "PathAngleCritic", "PreferForwardCritic"]
+      critics: ["ConstraintCritic", "CostCritic", "GoalCritic", "PathAlignCritic",
+                "PathFollowCritic", "PathAngleCritic", "PreferForwardCritic"]
       ConstraintCritic:
         enabled: true
         cost_power: 1
@@ -165,23 +174,19 @@ controller_server:
 local_costmap:
   local_costmap:
     ros__parameters:
+      use_sim_time: True
       transform_tolerance: 1.0
-      always_send_full_costmap: True 
+      always_send_full_costmap: True
       update_frequency: 5.0
       publish_frequency: 2.0
-      global_frame: "odom"
-      robot_base_frame: "base_link"
-      use_sim_time: True
+      global_frame: "odom"              # amr_X/odom olmalı (map DEĞİL)
+      robot_base_frame: "base_footprint"
       rolling_window: true
       width: 6
       height: 6
       resolution: 0.05
       footprint: "[[0.68, 0.33], [0.68, -0.33], [-0.12, -0.33], [-0.12, 0.33]]"
       plugins: ["voxel_layer", "inflation_layer"]
-      inflation_layer:
-        plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 2.0
-        inflation_radius: 0.20
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -193,7 +198,7 @@ local_costmap:
         mark_threshold: 0
         observation_sources: scan
         scan:
-          topic: scan                    
+          topic: scan                   # launch'ta /amr_X/scan olarak yeniden yazılır
           max_obstacle_height: 2.0
           clearing: True
           marking: True
@@ -202,26 +207,34 @@ local_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.55
 
 global_costmap:
   global_costmap:
     ros__parameters:
-      transform_tolerance: 1.0 
+      use_sim_time: True
+      transform_tolerance: 1.0
       update_frequency: 1.0
       publish_frequency: 1.0
-      global_frame: "map"
-      robot_base_frame: "base_link"
-      use_sim_time: True
+      global_frame: "map"               # ortak harita çerçevesi, önek ALMAZ
+      robot_base_frame: "base_footprint"
       resolution: 0.05
       footprint: "[[0.68, 0.33], [0.68, -0.33], [-0.12, -0.33], [-0.12, 0.33]]"
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+        map_topic: "/map"
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         observation_sources: scan
         scan:
-          topic: scan                    
+          topic: scan                   # launch'ta /amr_X/scan olarak yeniden yazılır
           clearing: True
           marking: True
           data_type: "LaserScan"
@@ -229,31 +242,36 @@ global_costmap:
           raytrace_min_range: 0.3
           obstacle_max_range: 10.0
           obstacle_min_range: 0.3
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: True
-        map_topic: "/map"                   
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 2.0
         inflation_radius: 0.55
 
-map_server:
-  ros__parameters:
-    use_sim_time: True
-    yaml_filename: "map_saved.yaml"
-
 planner_server:
   ros__parameters:
     use_sim_time: True
-    tolerance: 0.5
-    use_astar: true
+    expected_planner_frequency: 5.0
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
       tolerance: 0.5
       use_astar: true
       allow_unknown: true
+
+# EKLENDİ: smoother_server listede yönetiliyordu ama parametre bloğu yoktu.
+smoother_server:
+  ros__parameters:
+    use_sim_time: True
+    costmap_topic: global_costmap/costmap_raw
+    footprint_topic: global_costmap/published_footprint
+    robot_base_frame: "base_footprint"
+    transform_tolerance: 0.3
+    smoother_plugins: ["simple_smoother"]
+    simple_smoother:
+      plugin: "nav2_smoother::SimpleSmoother"
+      tolerance: 1.0e-10
+      max_its: 1000
+      do_refinement: True
 
 behavior_server:
   ros__parameters:
@@ -274,8 +292,8 @@ behavior_server:
       deceleration_limit: -0.8
     wait:
       plugin: "nav2_behaviors/Wait"
-    global_frame: "odom"
-    robot_base_frame: "base_link"
+    global_frame: "odom"                # amr_X/odom olmalı (map DEĞİL)
+    robot_base_frame: "base_footprint"
     transform_tolerance: 0.5
 
 waypoint_follower:
@@ -286,6 +304,7 @@ waypoint_follower:
     waypoint_task_executor_plugin: "wait_at_waypoint"
     wait_at_waypoint:
       plugin: "nav2_waypoint_follower::WaitAtWaypoint"
+      enabled: True
       waypoint_pause_duration: 200
 
 velocity_smoother:
@@ -295,9 +314,10 @@ velocity_smoother:
     scale_velocities: False
     feedback: "OPEN_LOOP"
     max_velocity: [0.65, 0.0, 1.2]
-    min_velocity: [-0.10, 0.0, -1.2]        
+    min_velocity: [-0.10, 0.0, -1.2]
     max_accel: [0.8, 0.0, 1.2]
     max_decel: [-1.0, 0.0, -1.5]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
+    velocity_timeout: 1.0

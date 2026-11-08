@@ -25,14 +25,16 @@
     <xacro:property name="caster_wheel_mass" value="1.0"/>
     <xacro:property name="caster_offset_x" value="0.65"/> <!-- Şasinin ön kısmına doğru -->
 
+    <!-- BASE FOOTPRINT (KÖK ÇERÇEVE: z = 0) -->
+    <link name="$(arg prefix)base_footprint"></link>
+
     <!-- BASE LINK -->
     <link name="$(arg prefix)base_link"></link>
-
-    <link name="$(arg prefix)base_footprint"></link>
+    
     <joint name="$(arg prefix)base_footprint_joint" type="fixed">
-       <parent link="$(arg prefix)base_link"/>
-       <child link="$(arg prefix)base_footprint"/>
-       <origin xyz="0 0 ${-wheel_radius}" rpy="0 0 0"/>
+       <parent link="$(arg prefix)base_footprint"/>
+       <child link="$(arg prefix)base_link"/>
+       <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
     </joint>
 
     <!-- CHASSIS LINK -->

@@ -9,34 +9,35 @@ slam_toolbox:
     ceres_dogleg_type: TRADITIONAL_DOGLEG
     ceres_loss_function: None
 
-    # ROS Parameters
+    # ROS Parameters (Launch dosyasında amr_X/ olarak ezilecek şablon değerler)
     odom_frame: odom
     map_frame: map
-    base_frame: base_link
-    scan_topic: /scan
+    base_frame: base_footprint        # URDF'deki yeni kök çerçeve ile eşitlendi
+    scan_topic: scan                  # Başındaki '/' kaldırıldı (amr_X/scan dinlemesi için)
     use_map_saver: true
     mode: localization
-    #map_file_name: /home/nazlican/dev_ws/src/rob_one/maps/map_saved
+    # Not: slam_toolbox localization modunda .yaml değil, serileştirilmiş (.posegraph / .data) harita bekler:
+    # map_file_name: /home/nazlican/Multiagent_Repo/src/rob_one/maps/map_serial
     map_start_at_dock: true
 
     debug_logging: false
     throttle_scans: 1
-    transform_publish_period: 0.02
+    transform_publish_period: 0.02    # 50 Hz map -> amr_X/odom TF yayını
     map_update_interval: 5.0
     resolution: 0.05
-    min_laser_range: 0.0
-    max_laser_range: 20.0
+    min_laser_range: 0.3              # AMCL ile tutarlı (şasi yansımalarını filtreler)
+    max_laser_range: 12.0             # Lidar maksimum menzili ile sınırlandı
     minimum_time_interval: 0.5
-    transform_timeout: 0.2
-    tf_buffer_duration: 30.
+    transform_timeout: 0.5            # 0.2'den 0.5'e çıkarıldı (Çoklu robotta TF darboğazını önler)
+    tf_buffer_duration: 30.0
     stack_size_to_use: 40000000
-    enable_interactive_mode: true
+    enable_interactive_mode: false    # Çoklu robotta RViz interactive marker çakışmasını ve CPU yükünü önler
 
     # General Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.5
-    minimum_travel_heading: 0.5
+    minimum_travel_distance: 0.2      # Lokalizasyon modunda daha sık düzeltme için 0.5'ten 0.2'ye çekildi
+    minimum_travel_heading: 0.2
     scan_buffer_size: 10
     scan_buffer_maximum_scan_distance: 10.0
     link_match_minimum_response_fine: 0.1  

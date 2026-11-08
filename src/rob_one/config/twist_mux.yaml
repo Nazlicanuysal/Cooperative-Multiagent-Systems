@@ -1,16 +1,22 @@
-twist_mux:
+# '/**' joker karakteri: düğüm hangi isim uzayında olursa olsun (/amr_1/twist_mux,
+# /amr_2/twist_mux) bu parametreler yüklenir.
+#
+# ÖNEMLİ: twist_mux çıktısını 'cmd_vel_out' topic'ine yayınlar. Node tanımında
+#   remappings=[('cmd_vel_out', 'cmd_vel')]
+# EKLENMEZSE çıktı /amr_X/cmd_vel_out'a gider ve Gazebo diff_drive robotu sürmez.
+/**:
   ros__parameters:
-    use_sim_time: True   
+    use_sim_time: True
     topics:
       navigation:
-         topic: cmd_vel_nav_smoothed   #yumuşatılmış kanalı dinliyor
-         timeout: 0.5
-         priority: 10
-      joystick:
-         topic: cmd_vel_joy
-         timeout: 0.5
-         priority: 100
+        topic: cmd_vel_nav_smoothed   # göreli -> /amr_X/cmd_vel_nav_smoothed
+        timeout: 0.5
+        priority: 10
       keyboard:
         topic: cmd_vel_teleop
+        timeout: 0.5
+        priority: 90                  # 100 idi: joystick ile eşit önceliği önlemek için
+      joystick:
+        topic: cmd_vel_joy
         timeout: 0.5
         priority: 100
